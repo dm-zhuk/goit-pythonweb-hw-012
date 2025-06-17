@@ -14,8 +14,15 @@ from fastapi_limiter.depends import RateLimiter
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.connect import get_db
-from src.schemas.schemas import UserCreate, UserResponse, Token, RequestEmail
-from src.services.email import send_verification_email
+from src.schemas.schemas import (
+    UserCreate,
+    UserResponse,
+    Token,
+    RequestEmail,
+    PasswordResetRequest,
+    PasswordResetConfirm,
+)
+from src.services.email import send_verification_email, send_reset_email
 from src.services.auth import auth_service
 from src.services.base import settings
 from src.services.get_upload import get_upload_file_service
@@ -147,3 +154,39 @@ async def update_avatar(
     await db.refresh(user)
 
     return UserResponse.model_validate(user)
+
+
+@router.post(
+    "/password-reset/request",
+    dependencies=[Depends(auth_service.get_current_user)],
+)
+async def request_password_reset(
+    request: PasswordResetRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        await auth_service.request_password_reset(request.email, db)
+        return {"message": "Password reset email sent"}
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        logger.error(f"Error in password reset request: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.post(
+    "/password-reset/confirm",
+    dependencies=[Depends(auth_service.get_current_user)],
+)
+async def reset_password(
+    request: PasswordResetConfirm,
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        await auth_service.reset_password(request.token, request.new_password, db)
+        return {"message": "Password reset successfully"}
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        logger.error(f"Error in password reset: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")

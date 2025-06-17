@@ -39,7 +39,7 @@ class BirthdayResponse(BaseModel):
 
 # User Schemas
 class UserCreate(BaseModel):
-    email: str
+    email: EmailStr
     password: str
     avatar: Optional[str] = None
 
@@ -59,3 +59,12 @@ class Token(BaseModel):
 
 class RequestEmail(BaseModel):
     email: EmailStr
+
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetConfirm(BaseModel):
+    token: str
+    new_password: str
