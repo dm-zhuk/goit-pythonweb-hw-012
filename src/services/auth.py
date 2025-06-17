@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timedelta
 
 from src.services.base import settings
-from src.database.connect import get_db, fetch_user
+from src.database.connect import get_db, get_user_from_cache
 
 import logging
 
@@ -64,7 +64,7 @@ class Auth:
         except JWTError:
             raise credentials_exception
 
-        user = await fetch_user(email, db)
+        user = await get_user_from_cache(email, db)
 
         return user
 

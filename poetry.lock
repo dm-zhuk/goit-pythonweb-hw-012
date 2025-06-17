@@ -1148,21 +1148,6 @@ files = [
 ]
 
 [[package]]
-name = "python-redis-cache"
-version = "4.0.2"
-description = "Basic Redis caching for functions"
-optional = false
-python-versions = ">=3.8"
-groups = ["main"]
-files = [
-    {file = "python_redis_cache-4.0.2-py3-none-any.whl", hash = "sha256:faf30f5aa7d456204ba5122d5f7c990ffd321b2a67a011d2c63bc85f02b03eb7"},
-    {file = "python_redis_cache-4.0.2.tar.gz", hash = "sha256:0d759e5f725edca6afcd12ee9812de129594df924b72593e5ff0aad4b297b93b"},
-]
-
-[package.dependencies]
-redis = "*"
-
-[[package]]
 name = "redis"
 version = "6.2.0"
 description = "Python client for Redis database and key-value store"
@@ -1447,4 +1432,4 @@ standard = ["colorama (>=0.4) ; sys_platform == \"win32\"", "httptools (>=0.5.0)
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "9cac70590f0e3c1ddaf282b2e7980bd7953fb158ee5f1cd785b8e97fecb449b6"
+content-hash = "6091ab312fc2849402b993c7734df2cf8a4f91acda80212d56f321d4064ce7f9"

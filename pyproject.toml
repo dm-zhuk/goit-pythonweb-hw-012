@@ -25,7 +25,6 @@ asyncpg = "^0.30.0"
 libgravatar = "^1.0.4"
 redis = "^6.2.0"
 pytest-cov = "^6.2.1"
-python-redis-cache = "^4.0.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.0"

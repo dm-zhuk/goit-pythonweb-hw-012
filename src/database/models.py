@@ -15,7 +15,10 @@ class User(Base):
 
     def to_dict(self):
         return {
+            "id": self.id,
             "email": self.email,
+            "is_verified": self.is_verified,
+            "avatar_url": self.avatar_url,
         }
 
 
