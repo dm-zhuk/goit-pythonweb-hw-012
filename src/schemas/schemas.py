@@ -4,6 +4,8 @@ from pydantic import BaseModel, EmailStr, ConfigDict
 from datetime import date
 from typing import Optional
 
+from src.database.models import Role
+
 
 # Contact Schemas
 class ContactBase(BaseModel):
@@ -49,6 +51,7 @@ class UserResponse(BaseModel):
     email: EmailStr
     is_verified: bool
     avatar_url: Optional[str] = None
+    roles: Role
     model_config = ConfigDict(from_attributes=True)
 
 

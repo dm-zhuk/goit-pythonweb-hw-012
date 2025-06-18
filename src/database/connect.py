@@ -46,7 +46,7 @@ async def get_user_from_cache(email: str, db: AsyncSession) -> dict:
     try:
         await rc.setex(
             cache_key, 3600, json.dumps(user_dict)
-        )  # Sets a key to a value with a mandatory expiration time in seconds
+        )  # 'setex' sets a key to a value with a mandatory expiration time in seconds
 
     except Exception as e:
         logger.error(f"Failed to cache user {email}: {str(e)}")

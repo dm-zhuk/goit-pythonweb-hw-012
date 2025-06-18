@@ -1,7 +1,12 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Date
+import enum
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Date, Enum
 from sqlalchemy.orm import relationship
-
 from .connect import Base
+
+
+class Role(enum.Enum):
+    admin: str = "admin"
+    user: str = "user"
 
 
 class User(Base):
@@ -11,6 +16,7 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     is_verified = Column(Boolean, default=False)
     avatar_url = Column(String, nullable=True)
+    roles = Column(Enum(Role), default=Role.user)
     contacts = relationship("Contact", back_populates="user")
 
     def to_dict(self):
@@ -19,6 +25,7 @@ class User(Base):
             "email": self.email,
             "is_verified": self.is_verified,
             "avatar_url": self.avatar_url,
+            "roles": self.roles.value,
         }
 
 

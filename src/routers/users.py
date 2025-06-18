@@ -1,5 +1,4 @@
 import logging
-
 from fastapi import (
     APIRouter,
     HTTPException,
@@ -12,8 +11,7 @@ from fastapi import (
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_limiter.depends import RateLimiter
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from src.database.connect import get_db
+from src.database.connect import get_db, rc
 from src.schemas.schemas import (
     UserCreate,
     UserResponse,
@@ -22,24 +20,31 @@ from src.schemas.schemas import (
     PasswordResetRequest,
     PasswordResetConfirm,
 )
-from src.services.email import send_verification_email, send_reset_email
+from src.services.email import send_verification_email
 from src.services.auth import auth_service
 from src.services.base import settings
 from src.services.get_upload import get_upload_file_service
+from src.database.models import Role, User
+from src.services.roles import RoleAccess
 from src.repository.users import (
     create_user,
     get_user_by_email,
     confirm_email,
 )
 
-
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/users", tags=["users"])
 upload_service = get_upload_file_service()
 
+# Role-based access
+allowed_get = RoleAccess([Role.admin, Role.user])
+allowed_update = RoleAccess([Role.admin])
+
 
 @router.post(
-    "/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED
+    "/register",
+    response_model=UserResponse,
+    status_code=status.HTTP_201_CREATED,
 )
 async def register_user(
     user: UserCreate,
@@ -54,7 +59,10 @@ async def register_user(
     return db_user
 
 
-@router.post("/login", response_model=Token)
+@router.post(
+    "/login",
+    response_model=Token,
+)
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_db),
@@ -124,22 +132,37 @@ async def verify_email(
 @router.get(
     "/me",
     response_model=UserResponse,
-    dependencies=[Depends(RateLimiter(times=5, seconds=60))],
+    dependencies=[
+        Depends(allowed_get),
+        Depends(RateLimiter(times=5, seconds=60)),
+    ],
 )
 async def read_users_me(
-    current_user: UserResponse = Depends(auth_service.get_current_user),
+    current_user: dict = Depends(auth_service.get_current_user),
 ):
-    return current_user
+    return UserResponse.model_validate(
+        User(
+            id=current_user["id"],
+            email=current_user["email"],
+            is_verified=current_user["is_verified"],
+            avatar_url=current_user["avatar_url"],
+            roles=Role(current_user["roles"]),
+        )
+    )
 
 
-@router.patch("/me/avatar", response_model=UserResponse)
+@router.patch(
+    "/me/avatar",
+    response_model=UserResponse,
+    dependencies=[Depends(allowed_update), Depends(RateLimiter(times=5, seconds=60))],
+)
 async def update_avatar(
     file: UploadFile = File(),
-    current_user: UserResponse = Depends(auth_service.get_current_user),
+    current_user: dict = Depends(auth_service.get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        image_url = upload_service.upload_file(file, current_user.email)
+        image_url = upload_service.upload_file(file, current_user["email"])
     except Exception as e:
         logger.error(f"Failed to upload avatar: {e}")
         raise HTTPException(
@@ -147,25 +170,31 @@ async def update_avatar(
             detail="Failed to upload avatar",
         )
 
-    user = await get_user_by_email(current_user.email, db)
+    user = await get_user_by_email(current_user["email"], db)
     user.avatar_url = image_url
     db.add(user)
     await db.commit()
     await db.refresh(user)
-
+    await rc.delete(f"fetch_user:{current_user['email']}")
     return UserResponse.model_validate(user)
 
 
 @router.post(
     "/password-reset/request",
-    dependencies=[Depends(auth_service.get_current_user)],
+    dependencies=[Depends(allowed_get)],
 )
 async def request_password_reset(
     request: PasswordResetRequest,
+    current_user: dict = Depends(auth_service.get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    if request.email != current_user["email"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Can only request password reset for your own email",
+        )
     try:
-        await auth_service.request_password_reset(request.email, db)
+        await auth_service.request_password_reset(current_user["email"], db)
         return {"message": "Password reset email sent"}
     except HTTPException as e:
         raise e
@@ -176,7 +205,6 @@ async def request_password_reset(
 
 @router.post(
     "/password-reset/confirm",
-    dependencies=[Depends(auth_service.get_current_user)],
 )
 async def reset_password(
     request: PasswordResetConfirm,

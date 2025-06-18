@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from src.services.base import settings
 from src.services.email import send_reset_email
 from src.database.connect import get_db, get_user_from_cache, rc
+from src.database.models import Role
 
 import logging
 
@@ -115,6 +116,13 @@ class Auth:
         user.hashed_password = hashed_password
         await db.commit()
         await rc.delete(f"reset_token:{token}")
+
+    async def get_current_admin(self, user: dict = Depends(get_current_user)) -> dict:
+        if user.get("roles") != Role.admin.value:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required"
+            )
+        return user
 
 
 auth_service = Auth()
