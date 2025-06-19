@@ -19,6 +19,19 @@ async def create_user(
     body: UserCreate,
     db: AsyncSession = Depends(get_db),
 ) -> User:
+    """
+    Creates a new user and returns the newly created user.
+
+    Args:
+        body: The new user's details.
+        db: The database session to use.
+
+    Returns:
+        The newly created user.
+
+    Raises:
+        HTTPException: If the email address is already registered.
+    """
     existing_user = await get_user_by_email(body.email, db)
     if existing_user:
         raise HTTPException(
@@ -50,6 +63,19 @@ async def get_user_by_email(
     db: AsyncSession = Depends(get_db),
     response: bool = False,
 ) -> Optional[Union[UserResponse, User]]:
+    """
+    Get a user by their email address.
+
+    Args:
+        email: The email address of the user to find.
+        db: The database session to use.
+        response: If True, return the user as a UserResponse object. Otherwise, return the User ORM object.
+
+    Returns:
+        The user if found, or None if not.
+
+    """
+
     stmt = select(User).where(User.email == email)
     result = await db.execute(stmt)
     user = result.scalars().first()
@@ -71,6 +97,20 @@ async def confirm_email(
     email: str,
     db: AsyncSession = Depends(get_db),
 ):
+    """
+    Verify a user's email address.
+
+    Args:
+        email: The email address of the user to verify.
+        db: The database session to use.
+
+    Returns:
+        None
+
+    Raises:
+        HTTPException: If the user is not found, or if there is an error
+            while updating the database.
+    """
     user = await get_user_by_email(email, db)
     if not user:
         raise HTTPException(

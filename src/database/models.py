@@ -20,6 +20,14 @@ class User(Base):
     contacts = relationship("Contact", back_populates="user")
 
     def to_dict(self):
+        """
+        Convert the User object to a dictionary representation.
+
+        Returns:
+            dict: A dictionary containing the user's id, email, verification status,
+                  avatar URL, and roles.
+        """
+
         return {
             "id": self.id,
             "email": self.email,

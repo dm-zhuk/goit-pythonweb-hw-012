@@ -9,6 +9,12 @@ logger = logging.getLogger(__name__)
 
 class RoleAccess:
     def __init__(self, allowed_roles: List[Role]):
+        """
+        Initialize a RoleAccess object.
+
+        Args:
+            allowed_roles: A list of allowed roles
+        """
         self.allowed_roles = allowed_roles
 
     async def __call__(
@@ -16,6 +22,22 @@ class RoleAccess:
         request: Request,
         current_user: dict = Depends(auth_service.get_current_user),
     ) -> dict:
+        """
+        Perform a role-based access check and return the current user if
+        authorized.
+
+        Args:
+            request: The current request.
+            current_user: The current user as a dictionary.
+
+        Returns:
+            The current user if authorized, or raises an HTTPException with a 403
+            status code and a detail message describing the authorization failure.
+
+        Raises:
+            HTTPException: If the current user does not have one of the allowed
+                roles, or if the current user does not have a valid role.
+        """
         try:
             user_role = Role(current_user.get("roles"))
         except ValueError:

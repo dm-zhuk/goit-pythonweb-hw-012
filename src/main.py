@@ -10,7 +10,6 @@ import uvicorn
 
 app = FastAPI(title="Contacts API", description="Contacts management REST API")
 
-# CORS Configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[settings.BASE_URL, "http://127.0.0.1:8000", "http://localhost:5500"],
@@ -22,6 +21,10 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup():
+    """
+    Application startup event handler.
+    Initializes the database and the FastAPI rate limiter.
+    """
     await init_db()
     await FastAPILimiter.init(rc)
 

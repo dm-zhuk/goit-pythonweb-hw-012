@@ -51,6 +51,20 @@ async def register_user(
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
 ):
+    """
+    Creates a new user.
+
+    Args:
+        user: The new user's details.
+        background_tasks: The background task handler.
+        db: The database session to use.
+
+    Returns:
+        The newly created user.
+
+    Raises:
+        HTTPException: If the email address is already registered.
+    """
     db_user = await create_user(user, db)
     token = await auth_service.create_email_token({"sub": db_user.email})
     background_tasks.add_task(
@@ -67,6 +81,19 @@ async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_db),
 ):
+    """
+    Authenticates a user using username and password.
+
+    Args:
+        form_data: The OAuth2 form data containing the username and password.
+        db: The database session to use.
+
+    Returns:
+        An access token and token type.
+
+    Raises:
+        HTTPException: If the credentials are invalid.
+    """
     email = form_data.username
     user_model = await get_user_by_email(email, db)
 
@@ -90,6 +117,20 @@ async def request_email(
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
 ):
+    """
+    Requests a verification email for a user.
+
+    Args:
+        body: The request data containing the user's email address.
+        background_tasks: The background task handler.
+        db: The database session to use.
+
+    Raises:
+        HTTPException: If the user is not found, or if the email address is already verified.
+
+    Returns:
+        A message indicating that the verification email was sent successfully.
+    """
     user = await get_user_by_email(body.email, db)
 
     if not user:
@@ -114,6 +155,19 @@ async def verify_email(
     token: str,
     db: AsyncSession = Depends(get_db),
 ):
+    """
+    Verifies a user's email address.
+
+    Args:
+        token: The verification token sent to the user's email address.
+        db: The database session to use.
+
+    Returns:
+        A message indicating that the email was verified successfully.
+
+    Raises:
+        HTTPException: If the user is not found, or if the email address is already verified.
+    """
     email = await auth_service.get_email_from_token(token)
     user = await get_user_by_email(email, db)
 
@@ -140,6 +194,21 @@ async def verify_email(
 async def read_users_me(
     current_user: dict = Depends(auth_service.get_current_user),
 ):
+    """
+    Retrieve the current authenticated user's information.
+
+    Args:
+        current_user: The current authenticated user obtained from the token.
+
+    Returns:
+        The user's information including id, email, verification status,
+        avatar URL, and roles as a UserResponse model.
+
+    Dependencies:
+        - Role-based access control allowing 'admin' and 'user' roles.
+        - Rate limiting to 5 requests per 60 seconds.
+    """
+
     return UserResponse.model_validate(
         User(
             id=current_user["id"],
@@ -161,6 +230,21 @@ async def update_avatar(
     current_user: dict = Depends(auth_service.get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    """
+    Update the avatar for the current authenticated user.
+
+    Args:
+        file: The new avatar image file to upload.
+        current_user: The current authenticated user obtained from the token.
+        db: The database session for updating the user's information.
+
+    Returns:
+        The updated user's information, including the new avatar URL, as a UserResponse model.
+
+    Raises:
+        HTTPException: If the avatar upload fails.
+    """
+
     try:
         image_url = upload_service.upload_file(file, current_user["email"])
     except Exception as e:
@@ -188,6 +272,15 @@ async def request_password_reset(
     current_user: dict = Depends(auth_service.get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    """
+    Requests a password reset email.
+
+    Args:
+        request: The request containing the email address.
+
+    Raises:
+        HTTPException: If the request is invalid or the email address is not the current user's.
+    """
     if request.email != current_user["email"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -210,6 +303,18 @@ async def reset_password(
     request: PasswordResetConfirm,
     db: AsyncSession = Depends(get_db),
 ):
+    """
+    Resets a user's password.
+
+    Args:
+        request: The request containing the new password and the verification token.
+
+    Returns:
+        A JSON response with a message indicating the password reset was successful.
+
+    Raises:
+        HTTPException: If the request is invalid or the verification token is expired.
+    """
     try:
         await auth_service.reset_password(request.token, request.new_password, db)
         return {"message": "Password reset successfully"}

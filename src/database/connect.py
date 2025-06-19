@@ -26,6 +26,20 @@ Base = declarative_base()
 
 
 async def get_user_from_db(email: str, db: AsyncSession) -> dict:
+    """
+    Fetches a user by email address from the database.
+
+    Args:
+        email: The email address of the user to find.
+        db: The database session to use.
+
+    Returns:
+        The user if found, or raises an HTTPException with a 404
+            status code if not.
+
+    Raises:
+        HTTPException: If the user is not found.
+    """
     from src.repository.users import get_user_by_email
 
     user = await get_user_by_email(email, db)
@@ -35,6 +49,20 @@ async def get_user_from_db(email: str, db: AsyncSession) -> dict:
 
 
 async def get_user_from_cache(email: str, db: AsyncSession) -> dict:
+    """
+    Fetches a user by email address from the cache.
+
+    Args:
+        email: The email address of the user to find.
+        db: The database session to use.
+
+    Returns:
+        The user if found in the cache, or the user from the database
+            if not found in the cache.
+
+    Raises:
+        HTTPException: If the user is not found in the cache or database.
+    """
     cache_key = f"get_user_from_cache:{email}"
     cached_user = await rc.get(cache_key)
     if cached_user:
@@ -55,11 +83,38 @@ async def get_user_from_cache(email: str, db: AsyncSession) -> dict:
 
 
 async def init_db():
+    """
+    Initialize the database.
+
+    This function creates all tables defined in the SQLAlchemy ORM models.
+    It establishes a connection to the database and executes the schema
+    creation commands.
+
+    Raises:
+        Exception: If there's an error during the table creation process.
+    """
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
 
 async def get_db():
+    """
+    Dependency function to provide a database session.
+
+    This function is designed to be used with FastAPI's dependency injection
+    system to provide an asynchronous SQLAlchemy database session. It ensures
+    that the session is properly initialized, committed, or rolled back in case
+    of errors, and closed after use.
+
+    Yields:
+        AsyncSession: An active database session.
+
+    Raises:
+        Exception: If any error occurs during the database operations, it logs
+        the error and raises the exception after rolling back the transaction.
+    """
+
     async with async_session() as db:
         try:
             yield db
