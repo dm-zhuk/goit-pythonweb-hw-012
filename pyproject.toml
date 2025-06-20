@@ -25,6 +25,7 @@ asyncpg = "^0.30.0"
 libgravatar = "^1.0.4"
 redis = "^6.2.0"
 alembic = "^1.16.2"
+bcrypt = "^4.3.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.4.1"  # Updated to match your main dependencies
@@ -32,6 +33,7 @@ pytest-asyncio = "^0.24.0"
 pytest-cov = "^6.2.1"
 pytest-mock = "^3.14.1"
 sphinx = "^8.2.3"
+httpx = "^0.28.1"
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

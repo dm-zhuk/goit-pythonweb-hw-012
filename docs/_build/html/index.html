@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Contacts management REST API documentation &#8212; Contacts management REST API  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="_static/nature.css?v=279e0f84" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Database Module" href="database.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="database.html" title="Database Module"
+             accesskey="N">next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">Contacts management REST API  documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Contacts management REST API documentation</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="contacts-management-rest-api-documentation">
+<h1>Contacts management REST API documentation<a class="headerlink" href="#contacts-management-rest-api-documentation" title="Link to this heading">¶</a></h1>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="database.html">Database Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="database.html#src.database.connect.get_db"><code class="docutils literal notranslate"><span class="pre">get_db()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="database.html#src.database.connect.get_user_from_cache"><code class="docutils literal notranslate"><span class="pre">get_user_from_cache()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="database.html#src.database.connect.get_user_from_db"><code class="docutils literal notranslate"><span class="pre">get_user_from_db()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="database.html#src.database.connect.init_db"><code class="docutils literal notranslate"><span class="pre">init_db()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="database.html#src.database.models.Contact"><code class="docutils literal notranslate"><span class="pre">Contact</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="database.html#src.database.models.Role"><code class="docutils literal notranslate"><span class="pre">Role</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="database.html#src.database.models.User"><code class="docutils literal notranslate"><span class="pre">User</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="repository.html">Repository Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="repository.html#src.repository.contacts.create_contact"><code class="docutils literal notranslate"><span class="pre">create_contact()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="repository.html#src.repository.contacts.delete_contact"><code class="docutils literal notranslate"><span class="pre">delete_contact()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="repository.html#src.repository.contacts.get_contact"><code class="docutils literal notranslate"><span class="pre">get_contact()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="repository.html#src.repository.contacts.get_contacts"><code class="docutils literal notranslate"><span class="pre">get_contacts()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="repository.html#src.repository.contacts.get_upcoming_birthdays"><code class="docutils literal notranslate"><span class="pre">get_upcoming_birthdays()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="repository.html#src.repository.contacts.search_contacts"><code class="docutils literal notranslate"><span class="pre">search_contacts()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="repository.html#src.repository.contacts.update_contact"><code class="docutils literal notranslate"><span class="pre">update_contact()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="repository.html#src.repository.users.confirm_email"><code class="docutils literal notranslate"><span class="pre">confirm_email()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="repository.html#src.repository.users.create_user"><code class="docutils literal notranslate"><span class="pre">create_user()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="repository.html#src.repository.users.get_user_by_email"><code class="docutils literal notranslate"><span class="pre">get_user_by_email()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="routers.html">Routers Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="routers.html#src.routers.contacts.create_new_contact"><code class="docutils literal notranslate"><span class="pre">create_new_contact()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="routers.html#src.routers.contacts.delete_existing_contact"><code class="docutils literal notranslate"><span class="pre">delete_existing_contact()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="routers.html#src.routers.contacts.get_contacts_with_upcoming_birthdays"><code class="docutils literal notranslate"><span class="pre">get_contacts_with_upcoming_birthdays()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="routers.html#src.routers.contacts.read_contact"><code class="docutils literal notranslate"><span class="pre">read_contact()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="routers.html#src.routers.contacts.read_contacts"><code class="docutils literal notranslate"><span class="pre">read_contacts()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="routers.html#src.routers.contacts.search_contacts_by_query"><code class="docutils literal notranslate"><span class="pre">search_contacts_by_query()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="routers.html#src.routers.contacts.update_existing_contact"><code class="docutils literal notranslate"><span class="pre">update_existing_contact()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="routers.html#src.routers.users.login"><code class="docutils literal notranslate"><span class="pre">login()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="routers.html#src.routers.users.read_users_me"><code class="docutils literal notranslate"><span class="pre">read_users_me()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="routers.html#src.routers.users.register_user"><code class="docutils literal notranslate"><span class="pre">register_user()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="routers.html#src.routers.users.request_email"><code class="docutils literal notranslate"><span class="pre">request_email()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="routers.html#src.routers.users.request_password_reset"><code class="docutils literal notranslate"><span class="pre">request_password_reset()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="routers.html#src.routers.users.reset_password"><code class="docutils literal notranslate"><span class="pre">reset_password()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="routers.html#src.routers.users.update_avatar"><code class="docutils literal notranslate"><span class="pre">update_avatar()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="routers.html#src.routers.users.verify_email"><code class="docutils literal notranslate"><span class="pre">verify_email()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="routers.html#src.routers.utils.healthchecker"><code class="docutils literal notranslate"><span class="pre">healthchecker()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="schemas.html">Schemas Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="schemas.html#src.schemas.schemas.BirthdayResponse"><code class="docutils literal notranslate"><span class="pre">BirthdayResponse</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="schemas.html#src.schemas.schemas.ContactBase"><code class="docutils literal notranslate"><span class="pre">ContactBase</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="schemas.html#src.schemas.schemas.ContactCreate"><code class="docutils literal notranslate"><span class="pre">ContactCreate</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="schemas.html#src.schemas.schemas.ContactResponse"><code class="docutils literal notranslate"><span class="pre">ContactResponse</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="schemas.html#src.schemas.schemas.ContactUpdate"><code class="docutils literal notranslate"><span class="pre">ContactUpdate</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="schemas.html#src.schemas.schemas.PasswordResetConfirm"><code class="docutils literal notranslate"><span class="pre">PasswordResetConfirm</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="schemas.html#src.schemas.schemas.PasswordResetRequest"><code class="docutils literal notranslate"><span class="pre">PasswordResetRequest</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="schemas.html#src.schemas.schemas.RequestEmail"><code class="docutils literal notranslate"><span class="pre">RequestEmail</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="schemas.html#src.schemas.schemas.Token"><code class="docutils literal notranslate"><span class="pre">Token</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="schemas.html#src.schemas.schemas.UserCreate"><code class="docutils literal notranslate"><span class="pre">UserCreate</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="schemas.html#src.schemas.schemas.UserResponse"><code class="docutils literal notranslate"><span class="pre">UserResponse</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="services.html">Services Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="services.html#src.services.auth.Auth"><code class="docutils literal notranslate"><span class="pre">Auth</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="services.html#src.services.base.Settings"><code class="docutils literal notranslate"><span class="pre">Settings</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="services.html#src.services.cloudinary_config.UploadFileService"><code class="docutils literal notranslate"><span class="pre">UploadFileService</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="services.html#src.services.email.send_reset_email"><code class="docutils literal notranslate"><span class="pre">send_reset_email()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="services.html#src.services.email.send_verification_email"><code class="docutils literal notranslate"><span class="pre">send_verification_email()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="services.html#src.services.get_upload.get_upload_file_service"><code class="docutils literal notranslate"><span class="pre">get_upload_file_service()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="services.html#src.services.roles.RoleAccess"><code class="docutils literal notranslate"><span class="pre">RoleAccess</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="#">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Contacts management REST API documentation</a></li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="database.html"
+                          title="next chapter">Database Module</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="database.html" title="Database Module"
+             >next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">Contacts management REST API  documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Contacts management REST API documentation</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2025, dm-zhuk.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

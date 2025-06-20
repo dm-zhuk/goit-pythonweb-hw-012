@@ -1,9 +1,6 @@
-from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
-from fastapi_mail.errors import ConnectionErrors
+from fastapi_mail import FastMail, ConnectionConfig, MessageSchema, MessageType
 from pathlib import Path
-
 from src.services.base import settings
-
 import logging
 
 logger = logging.getLogger(__name__)
@@ -24,73 +21,32 @@ conf = ConnectionConfig(
 
 
 async def send_verification_email(email: str, token: str, BASE_URL: str):
-    """
-    Sends a verification email to the given email address with a link to verify the email
-    address.
-
-    Args:
-        email: The email address to send the verification email to.
-        token: The JWT token to include in the verification link.
-        BASE_URL: The base URL of the API to include in the verification link.
-
-    Raises:
-        ConnectionErrors: If there is an error connecting to the SMTP server.
-        Exception: If there is an unexpected error sending the email.
-    """
     try:
         message = MessageSchema(
             subject="Email Confirmation",
             recipients=[email],
-            template_body={
-                "host": BASE_URL,
-                "username": email,
-                "token": token,
-            },
+            template_body={"host": BASE_URL, "username": email, "token": token},
             subtype=MessageType.html,
         )
-
         fm = FastMail(conf)
         await fm.send_message(message, template_name="email_template.html")
         logger.info(f"Verification email sent to {email}")
-    except ConnectionErrors as e:
-        logger.error(f"Failed to send verification email to {email}: {e}")
-        raise
     except Exception as e:
-        logger.error(f"Unexpected error sending email to {email}: {e}")
+        logger.error(f"Failed to send verification email to {email}: {e}")
         raise
 
 
 async def send_reset_email(email: str, token: str, BASE_URL: str):
-    """
-    Sends a password reset email to the given email address with a link to reset the password.
-
-    Args:
-        email: The email address to send the password reset email to.
-        token: The JWT token to include in the password reset link.
-        BASE_URL: The base URL of the API to include in the password reset link.
-
-    Raises:
-        ConnectionErrors: If there is an error connecting to the SMTP server.
-        Exception: If there is an unexpected error sending the email.
-    """
     try:
         message = MessageSchema(
             subject="Password Reset Request",
             recipients=[email],
-            template_body={
-                "host": BASE_URL,
-                "username": email,
-                "token": token,
-            },
+            template_body={"host": BASE_URL, "username": email, "token": token},
             subtype=MessageType.html,
         )
-
         fm = FastMail(conf)
         await fm.send_message(message, template_name="email_template_reset.html")
         logger.info(f"Password reset email sent to {email}")
-    except ConnectionErrors as e:
-        logger.error(f"Failed to send password reset email to {email}: {e}")
-        raise
     except Exception as e:
-        logger.error(f"Unexpected error sending email to {email}: {e}")
+        logger.error(f"Failed to send password reset email to {email}: {e}")
         raise

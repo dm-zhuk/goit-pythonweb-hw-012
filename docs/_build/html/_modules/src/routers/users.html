@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>src.routers.users &#8212; Contacts management REST API  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/nature.css?v=279e0f84" />
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Contacts management REST API  documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">src.routers.users</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for src.routers.users</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">APIRouter</span><span class="p">,</span>
+    <span class="n">HTTPException</span><span class="p">,</span>
+    <span class="n">status</span><span class="p">,</span>
+    <span class="n">UploadFile</span><span class="p">,</span>
+    <span class="n">BackgroundTasks</span><span class="p">,</span>
+    <span class="n">Depends</span><span class="p">,</span>
+    <span class="n">File</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi.security</span><span class="w"> </span><span class="kn">import</span> <span class="n">OAuth2PasswordRequestForm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi_limiter.depends</span><span class="w"> </span><span class="kn">import</span> <span class="n">RateLimiter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy.ext.asyncio</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncSession</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">src.database.connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_db</span><span class="p">,</span> <span class="n">rc</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">src.schemas.schemas</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">UserCreate</span><span class="p">,</span>
+    <span class="n">UserResponse</span><span class="p">,</span>
+    <span class="n">Token</span><span class="p">,</span>
+    <span class="n">RequestEmail</span><span class="p">,</span>
+    <span class="n">PasswordResetRequest</span><span class="p">,</span>
+    <span class="n">PasswordResetConfirm</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">src.services.email</span><span class="w"> </span><span class="kn">import</span> <span class="n">send_verification_email</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">src.services.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">auth_service</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">src.services.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">src.services.get_upload</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_upload_file_service</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">src.database.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Role</span><span class="p">,</span> <span class="n">User</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">src.services.roles</span><span class="w"> </span><span class="kn">import</span> <span class="n">RoleAccess</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">src.repository.users</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">create_user</span><span class="p">,</span>
+    <span class="n">get_user_by_email</span><span class="p">,</span>
+    <span class="n">confirm_email</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">router</span> <span class="o">=</span> <span class="n">APIRouter</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;/api/users&quot;</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;users&quot;</span><span class="p">])</span>
+<span class="n">upload_service</span> <span class="o">=</span> <span class="n">get_upload_file_service</span><span class="p">()</span>
+
+<span class="c1"># Role-based access</span>
+<span class="n">allowed_get</span> <span class="o">=</span> <span class="n">RoleAccess</span><span class="p">([</span><span class="n">Role</span><span class="o">.</span><span class="n">admin</span><span class="p">,</span> <span class="n">Role</span><span class="o">.</span><span class="n">user</span><span class="p">])</span>
+<span class="n">allowed_update</span> <span class="o">=</span> <span class="n">RoleAccess</span><span class="p">([</span><span class="n">Role</span><span class="o">.</span><span class="n">admin</span><span class="p">])</span>
+
+
+<div class="viewcode-block" id="register_user">
+<a class="viewcode-back" href="../../../routers.html#src.routers.users.register_user">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+    <span class="s2">&quot;/register&quot;</span><span class="p">,</span>
+    <span class="n">response_model</span><span class="o">=</span><span class="n">UserResponse</span><span class="p">,</span>
+    <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_201_CREATED</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">register_user</span><span class="p">(</span>
+    <span class="n">user</span><span class="p">:</span> <span class="n">UserCreate</span><span class="p">,</span>
+    <span class="n">background_tasks</span><span class="p">:</span> <span class="n">BackgroundTasks</span><span class="p">,</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">),</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates a new user.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        user: The new user&#39;s details.</span>
+<span class="sd">        background_tasks: The background task handler.</span>
+<span class="sd">        db: The database session to use.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The newly created user.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException: If the email address is already registered.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">db_user</span> <span class="o">=</span> <span class="k">await</span> <span class="n">create_user</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">db</span><span class="p">)</span>
+    <span class="n">token</span> <span class="o">=</span> <span class="k">await</span> <span class="n">auth_service</span><span class="o">.</span><span class="n">create_email_token</span><span class="p">({</span><span class="s2">&quot;sub&quot;</span><span class="p">:</span> <span class="n">db_user</span><span class="o">.</span><span class="n">email</span><span class="p">})</span>
+    <span class="n">background_tasks</span><span class="o">.</span><span class="n">add_task</span><span class="p">(</span>
+        <span class="n">send_verification_email</span><span class="p">,</span> <span class="n">db_user</span><span class="o">.</span><span class="n">email</span><span class="p">,</span> <span class="n">token</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">BASE_URL</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">db_user</span></div>
+
+
+
+<div class="viewcode-block" id="login">
+<a class="viewcode-back" href="../../../routers.html#src.routers.users.login">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+    <span class="s2">&quot;/login&quot;</span><span class="p">,</span>
+    <span class="n">response_model</span><span class="o">=</span><span class="n">Token</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">login</span><span class="p">(</span>
+    <span class="n">form_data</span><span class="p">:</span> <span class="n">OAuth2PasswordRequestForm</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">),</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Authenticates a user using username and password.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        form_data: The OAuth2 form data containing the username and password.</span>
+<span class="sd">        db: The database session to use.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        An access token and token type.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException: If the credentials are invalid.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">email</span> <span class="o">=</span> <span class="n">form_data</span><span class="o">.</span><span class="n">username</span>
+    <span class="n">user_model</span> <span class="o">=</span> <span class="k">await</span> <span class="n">get_user_by_email</span><span class="p">(</span><span class="n">email</span><span class="p">,</span> <span class="n">db</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">user_model</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">auth_service</span><span class="o">.</span><span class="n">verify_password</span><span class="p">(</span>
+        <span class="n">form_data</span><span class="o">.</span><span class="n">password</span><span class="p">,</span> <span class="n">user_model</span><span class="o">.</span><span class="n">hashed_password</span>
+    <span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed login attempt for user: </span><span class="si">{</span><span class="n">form_data</span><span class="o">.</span><span class="n">username</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+            <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_401_UNAUTHORIZED</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;Invalid credentials&quot;</span><span class="p">,</span>
+            <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;WWW-Authenticate&quot;</span><span class="p">:</span> <span class="s2">&quot;Bearer&quot;</span><span class="p">},</span>
+        <span class="p">)</span>
+
+    <span class="n">access_token</span> <span class="o">=</span> <span class="k">await</span> <span class="n">auth_service</span><span class="o">.</span><span class="n">create_access_token</span><span class="p">({</span><span class="s2">&quot;sub&quot;</span><span class="p">:</span> <span class="n">user_model</span><span class="o">.</span><span class="n">email</span><span class="p">})</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;access_token&quot;</span><span class="p">:</span> <span class="n">access_token</span><span class="p">,</span> <span class="s2">&quot;token_type&quot;</span><span class="p">:</span> <span class="s2">&quot;bearer&quot;</span><span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="request_email">
+<a class="viewcode-back" href="../../../routers.html#src.routers.users.request_email">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/request_email&quot;</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">request_email</span><span class="p">(</span>
+    <span class="n">body</span><span class="p">:</span> <span class="n">RequestEmail</span><span class="p">,</span>
+    <span class="n">background_tasks</span><span class="p">:</span> <span class="n">BackgroundTasks</span><span class="p">,</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">),</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Requests a verification email for a user.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        body: The request data containing the user&#39;s email address.</span>
+<span class="sd">        background_tasks: The background task handler.</span>
+<span class="sd">        db: The database session to use.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException: If the user is not found, or if the email address is already verified.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A message indicating that the verification email was sent successfully.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="k">await</span> <span class="n">get_user_by_email</span><span class="p">(</span><span class="n">body</span><span class="o">.</span><span class="n">email</span><span class="p">,</span> <span class="n">db</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">user</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+            <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_404_NOT_FOUND</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;User not found&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">is_verified</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+            <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_400_BAD_REQUEST</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;Email already verified&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">token</span> <span class="o">=</span> <span class="k">await</span> <span class="n">auth_service</span><span class="o">.</span><span class="n">create_email_token</span><span class="p">({</span><span class="s2">&quot;sub&quot;</span><span class="p">:</span> <span class="n">user</span><span class="o">.</span><span class="n">email</span><span class="p">})</span>
+    <span class="n">background_tasks</span><span class="o">.</span><span class="n">add_task</span><span class="p">(</span>
+        <span class="n">send_verification_email</span><span class="p">,</span> <span class="n">body</span><span class="o">.</span><span class="n">email</span><span class="p">,</span> <span class="n">token</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">BASE_URL</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="s2">&quot;Verification email sent successfully&quot;</span><span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="verify_email">
+<a class="viewcode-back" href="../../../routers.html#src.routers.users.verify_email">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/verify&quot;</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">verify_email</span><span class="p">(</span>
+    <span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">),</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Verifies a user&#39;s email address.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        token: The verification token sent to the user&#39;s email address.</span>
+<span class="sd">        db: The database session to use.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A message indicating that the email was verified successfully.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException: If the user is not found, or if the email address is already verified.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">email</span> <span class="o">=</span> <span class="k">await</span> <span class="n">auth_service</span><span class="o">.</span><span class="n">get_email_from_token</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="k">await</span> <span class="n">get_user_by_email</span><span class="p">(</span><span class="n">email</span><span class="p">,</span> <span class="n">db</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">user</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+            <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_404_NOT_FOUND</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;User not found&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">is_verified</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="s2">&quot;Email already verified&quot;</span><span class="p">}</span>
+
+    <span class="k">await</span> <span class="n">confirm_email</span><span class="p">(</span><span class="n">email</span><span class="p">,</span> <span class="n">db</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="s2">&quot;Email verified successfully&quot;</span><span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="read_users_me">
+<a class="viewcode-back" href="../../../routers.html#src.routers.users.read_users_me">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+    <span class="s2">&quot;/me&quot;</span><span class="p">,</span>
+    <span class="n">response_model</span><span class="o">=</span><span class="n">UserResponse</span><span class="p">,</span>
+    <span class="n">dependencies</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">Depends</span><span class="p">(</span><span class="n">allowed_get</span><span class="p">),</span>
+        <span class="n">Depends</span><span class="p">(</span><span class="n">RateLimiter</span><span class="p">(</span><span class="n">times</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">seconds</span><span class="o">=</span><span class="mi">60</span><span class="p">)),</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">read_users_me</span><span class="p">(</span>
+    <span class="n">current_user</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">auth_service</span><span class="o">.</span><span class="n">get_current_user</span><span class="p">),</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Retrieve the current authenticated user&#39;s information.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        current_user: The current authenticated user obtained from the token.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The user&#39;s information including id, email, verification status,</span>
+<span class="sd">        avatar URL, and roles as a UserResponse model.</span>
+
+<span class="sd">    Dependencies:</span>
+<span class="sd">        - Role-based access control allowing &#39;admin&#39; and &#39;user&#39; roles.</span>
+<span class="sd">        - Rate limiting to 5 requests per 60 seconds.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="n">UserResponse</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span>
+        <span class="n">User</span><span class="p">(</span>
+            <span class="nb">id</span><span class="o">=</span><span class="n">current_user</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">],</span>
+            <span class="n">email</span><span class="o">=</span><span class="n">current_user</span><span class="p">[</span><span class="s2">&quot;email&quot;</span><span class="p">],</span>
+            <span class="n">is_verified</span><span class="o">=</span><span class="n">current_user</span><span class="p">[</span><span class="s2">&quot;is_verified&quot;</span><span class="p">],</span>
+            <span class="n">avatar_url</span><span class="o">=</span><span class="n">current_user</span><span class="p">[</span><span class="s2">&quot;avatar_url&quot;</span><span class="p">],</span>
+            <span class="n">roles</span><span class="o">=</span><span class="n">Role</span><span class="p">(</span><span class="n">current_user</span><span class="p">[</span><span class="s2">&quot;roles&quot;</span><span class="p">]),</span>
+        <span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="update_avatar">
+<a class="viewcode-back" href="../../../routers.html#src.routers.users.update_avatar">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">patch</span><span class="p">(</span>
+    <span class="s2">&quot;/me/avatar&quot;</span><span class="p">,</span>
+    <span class="n">response_model</span><span class="o">=</span><span class="n">UserResponse</span><span class="p">,</span>
+    <span class="n">dependencies</span><span class="o">=</span><span class="p">[</span><span class="n">Depends</span><span class="p">(</span><span class="n">allowed_update</span><span class="p">),</span> <span class="n">Depends</span><span class="p">(</span><span class="n">RateLimiter</span><span class="p">(</span><span class="n">times</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">seconds</span><span class="o">=</span><span class="mi">60</span><span class="p">))],</span>
+<span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">update_avatar</span><span class="p">(</span>
+    <span class="n">file</span><span class="p">:</span> <span class="n">UploadFile</span> <span class="o">=</span> <span class="n">File</span><span class="p">(),</span>
+    <span class="n">current_user</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">auth_service</span><span class="o">.</span><span class="n">get_current_user</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">),</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Update the avatar for the current authenticated user.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        file: The new avatar image file to upload.</span>
+<span class="sd">        current_user: The current authenticated user obtained from the token.</span>
+<span class="sd">        db: The database session for updating the user&#39;s information.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The updated user&#39;s information, including the new avatar URL, as a UserResponse model.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException: If the avatar upload fails.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">image_url</span> <span class="o">=</span> <span class="n">upload_service</span><span class="o">.</span><span class="n">upload_file</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">current_user</span><span class="p">[</span><span class="s2">&quot;email&quot;</span><span class="p">])</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to upload avatar: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+            <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_500_INTERNAL_SERVER_ERROR</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;Failed to upload avatar&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="n">user</span> <span class="o">=</span> <span class="k">await</span> <span class="n">get_user_by_email</span><span class="p">(</span><span class="n">current_user</span><span class="p">[</span><span class="s2">&quot;email&quot;</span><span class="p">],</span> <span class="n">db</span><span class="p">)</span>
+    <span class="n">user</span><span class="o">.</span><span class="n">avatar_url</span> <span class="o">=</span> <span class="n">image_url</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">refresh</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">rc</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;fetch_user:</span><span class="si">{</span><span class="n">current_user</span><span class="p">[</span><span class="s1">&#39;email&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">UserResponse</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">user</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="request_password_reset">
+<a class="viewcode-back" href="../../../routers.html#src.routers.users.request_password_reset">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+    <span class="s2">&quot;/password-reset/request&quot;</span><span class="p">,</span>
+    <span class="n">dependencies</span><span class="o">=</span><span class="p">[</span><span class="n">Depends</span><span class="p">(</span><span class="n">allowed_get</span><span class="p">)],</span>
+<span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">request_password_reset</span><span class="p">(</span>
+    <span class="n">request</span><span class="p">:</span> <span class="n">PasswordResetRequest</span><span class="p">,</span>
+    <span class="n">current_user</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">auth_service</span><span class="o">.</span><span class="n">get_current_user</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">),</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Requests a password reset email.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        request: The request containing the email address.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException: If the request is invalid or the email address is not the current user&#39;s.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">email</span> <span class="o">!=</span> <span class="n">current_user</span><span class="p">[</span><span class="s2">&quot;email&quot;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+            <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_403_FORBIDDEN</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;Can only request password reset for your own email&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">await</span> <span class="n">auth_service</span><span class="o">.</span><span class="n">request_password_reset</span><span class="p">(</span><span class="n">current_user</span><span class="p">[</span><span class="s2">&quot;email&quot;</span><span class="p">],</span> <span class="n">db</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="s2">&quot;Password reset email sent&quot;</span><span class="p">}</span>
+    <span class="k">except</span> <span class="n">HTTPException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">e</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error in password reset request: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;Internal server error&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="reset_password">
+<a class="viewcode-back" href="../../../routers.html#src.routers.users.reset_password">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+    <span class="s2">&quot;/password-reset/confirm&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">reset_password</span><span class="p">(</span>
+    <span class="n">request</span><span class="p">:</span> <span class="n">PasswordResetConfirm</span><span class="p">,</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">),</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Resets a user&#39;s password.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        request: The request containing the new password and the verification token.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A JSON response with a message indicating the password reset was successful.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException: If the request is invalid or the verification token is expired.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">await</span> <span class="n">auth_service</span><span class="o">.</span><span class="n">reset_password</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">token</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">new_password</span><span class="p">,</span> <span class="n">db</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="s2">&quot;Password reset successfully&quot;</span><span class="p">}</span>
+    <span class="k">except</span> <span class="n">HTTPException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">e</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error in password reset: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;Internal server error&quot;</span><span class="p">)</span></div>
+
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Contacts management REST API  documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">src.routers.users</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2025, dm-zhuk.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

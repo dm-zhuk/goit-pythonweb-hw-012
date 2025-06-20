@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>src.services.base &#8212; Contacts management REST API  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/nature.css?v=279e0f84" />
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Contacts management REST API  documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">src.services.base</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for src.services.base</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseSettings</span>
+
+
+<div class="viewcode-block" id="Settings">
+<a class="viewcode-back" href="../../../services.html#src.services.base.Settings">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Settings</span><span class="p">(</span><span class="n">BaseSettings</span><span class="p">):</span>
+    <span class="n">DATABASE_URL</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">JWT_SECRET</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">JWT_ALGORITHM</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">JWT_EXPIRE_MINUTES</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">CLOUDINARY_CLOUD_NAME</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">CLOUDINARY_API_KEY</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">CLOUDINARY_API_SECRET</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">SMTP_SERVER</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">SMTP_PORT</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">SMTP_USER</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">SMTP_PASSWORD</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">MAIL_FROM_EMAIL</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">BASE_URL</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">POSTGRES_USER</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">POSTGRES_PASSWORD</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">POSTGRES_DB</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">PGADMIN_DEFAULT_EMAIL</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">PGADMIN_DEFAULT_PASSWORD</span><span class="p">:</span> <span class="nb">str</span>
+
+<div class="viewcode-block" id="Settings.Config">
+<a class="viewcode-back" href="../../../services.html#src.services.base.Settings.Config">[docs]</a>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Config</span><span class="p">:</span>
+        <span class="n">env_file</span> <span class="o">=</span> <span class="s2">&quot;.env&quot;</span>
+        <span class="n">env_file_encoding</span> <span class="o">=</span> <span class="s2">&quot;utf-8&quot;</span>
+        <span class="n">extra</span> <span class="o">=</span> <span class="s2">&quot;ignore&quot;</span></div>
+</div>
+
+
+
+<span class="n">settings</span> <span class="o">=</span> <span class="n">Settings</span><span class="p">()</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Contacts management REST API  documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">src.services.base</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2025, dm-zhuk.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>
