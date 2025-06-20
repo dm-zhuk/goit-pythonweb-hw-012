@@ -3,7 +3,6 @@ from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock, patch
 from src.main import app
 from src.schemas.schemas import ContactCreate, ContactResponse, BirthdayResponse
-from src.database.models import User
 from datetime import date
 
 client = TestClient(app)
@@ -46,11 +45,10 @@ def contact_response():
 @pytest.mark.asyncio
 async def test_create_new_contact_success(user_dict, contact_data, contact_response):
     with patch(
-        "src.routers.contacts.create_contact", return_value=contact_response
+        "src.repository.contacts.create_contact",
+        return_value=AsyncMock(id=1, **contact_data.dict()),
     ) as mock_create:
-        with patch(
-            "src.routers.contacts.auth_service.get_current_user", return_value=user_dict
-        ):
+        with patch("src.services.auth.get_current_user", return_value=user_dict):
             response = client.post("/contacts/", json=contact_data.dict())
             assert response.status_code == 201
             assert response.json() == contact_response.dict()

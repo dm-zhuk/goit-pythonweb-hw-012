@@ -1,7 +1,7 @@
 import enum
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Date, Enum
 from sqlalchemy.orm import relationship
-from .connect import Base
+from .db import Base
 
 
 class Role(enum.Enum):

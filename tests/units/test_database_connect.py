@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
 import json
 
-from src.database.connect import (
+from src.database.db import (
     get_user_from_db,
     get_user_from_cache,
     init_db,

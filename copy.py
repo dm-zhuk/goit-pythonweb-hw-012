@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional, List
 from datetime import date
 
-from src.database.connect import get_db
+from src.database.db import get_db
 from src.schemas.schemas import (
     ContactCreate,
     ContactResponse,
@@ -255,7 +255,7 @@ from fastapi import (
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_limiter.depends import RateLimiter
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.database.connect import get_db, rc
+from src.database.db import get_db, rc
 from src.schemas.schemas import (
     UserCreate,
     UserResponse,
@@ -573,7 +573,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 
-from src.database.connect import get_db
+from src.database.db import get_db
 
 router = APIRouter(tags=["healthchecker"])
 
@@ -702,7 +702,7 @@ from datetime import datetime, timedelta
 
 from src.services.base import settings
 from src.services.email import send_reset_email
-from src.database.connect import get_db, get_user_from_cache, rc
+from src.database.db import get_db, get_user_from_cache, rc
 from src.database.models import Role
 
 import logging

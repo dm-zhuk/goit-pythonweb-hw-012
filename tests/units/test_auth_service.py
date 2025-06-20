@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch, AsyncMock, ANY
 from src.services.auth import Auth
 
 
@@ -14,10 +14,16 @@ async def test_request_password_reset_success(auth_service):
 
     with patch("src.repository.users.get_user_by_email") as mock_get_user_by_email:
         mock_get_user_by_email.return_value = AsyncMock()
+
         with patch("src.services.auth.send_reset_email") as mock_send_reset_email:
-            await auth_service.request_password_reset(email, AsyncMock())
-            mock_get_user_by_email.assert_called_once_with(email, AsyncMock())
-            mock_send_reset_email.assert_called_once()
+            with patch("src.services.auth.rc") as mock_redis:
+                mock_redis.setex = AsyncMock()
+
+                await auth_service.request_password_reset(email, AsyncMock())
+
+                mock_get_user_by_email.assert_called_once_with(email, ANY)
+                mock_send_reset_email.assert_called_once()
+                mock_redis.setex.assert_called_once()
 
 
 @pytest.mark.asyncio

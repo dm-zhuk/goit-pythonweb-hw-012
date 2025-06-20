@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 
 from src.services.base import settings
 from src.services.email import send_reset_email
-from src.database.connect import get_db, get_user_from_cache, rc
+from src.database.db import get_db, get_user_from_cache, rc
 from src.database.models import Role
 
 import logging
@@ -169,10 +169,13 @@ class Auth:
         if user is None:
             raise HTTPException(status_code=404, detail="User not found")
         token = await self.create_email_token({"sub": email})
+        logger.info(f"Generated token: {token}")
         try:
             await rc.setex(f"reset_token:{token}", 3600, email)
+            logger.info(f"Stored reset token for {email}")
         except Exception as e:
-            logger.error(f"Failed to store reset token: {str(e)}")
+            logger.info(f"Failed to store reset token: {e}")
+
         await send_reset_email(email, token, str(settings.BASE_URL))
 
     async def reset_password(

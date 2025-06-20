@@ -25,15 +25,14 @@ def mock_user():
         id=1,
         email="test@example.com",
         hashed_password="hashed_password",
-        avatar_url=None,
         is_verified=False,
+        avatar_url=None,
         roles=Role.user,
     )
 
 
 @pytest.mark.asyncio
 async def test_create_user_success(mock_session, user_data):
-    # Setup mocks
     with patch(
         "src.repository.users.get_user_by_email", return_value=None
     ) as mock_get_user:

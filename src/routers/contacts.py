@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional, List
 from datetime import date
 
-from src.database.connect import get_db
+from src.database.db import get_db
 from src.schemas.schemas import (
     ContactCreate,
     ContactResponse,

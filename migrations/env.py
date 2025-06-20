@@ -8,7 +8,7 @@ from logging.config import fileConfig
 
 from alembic import context
 
-from src.database.connect import Base
+from src.database.db import Base
 from src.services.base import settings
 
 logger = logging.getLogger("alembic.env")

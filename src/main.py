@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_limiter import FastAPILimiter
 
-from src.database.connect import init_db, rc
+from src.database.db import init_db, rc
 from src.services.base import settings
 from src.routers import contacts, users, utils
 

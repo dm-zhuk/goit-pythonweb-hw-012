@@ -6,7 +6,7 @@ from fastapi import HTTPException, status, Depends
 from typing import Optional, Union
 from libgravatar import Gravatar
 
-from src.database.connect import get_db
+from src.database.db import get_db
 from src.database.models import User
 from src.schemas.schemas import UserCreate, UserResponse
 from src.services.auth import auth_service

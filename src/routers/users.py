@@ -11,7 +11,7 @@ from fastapi import (
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_limiter.depends import RateLimiter
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.database.connect import get_db, rc
+from src.database.db import get_db, rc
 from src.schemas.schemas import (
     UserCreate,
     UserResponse,
