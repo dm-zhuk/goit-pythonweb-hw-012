@@ -35,12 +35,27 @@ pytest-mock = "^3.14.1"
 sphinx = "^8.2.3"
 aiosqlite = "^0.21.0"
 httpx = "^0.28.1"
+factory-boy = "^3.3.3"
+testcontainers = "^4.10.0"
 
 [tool.pytest.ini_options]
 pythonpath = "."
 filterwarnings = "ignore::DeprecationWarning"
 asyncio_default_fixture_loop_scope = "function"
- 
+testpaths = ["tests/unit", "tests/integration"]
+addopts = "--disable-warnings --maxfail=5"
+
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests"
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
