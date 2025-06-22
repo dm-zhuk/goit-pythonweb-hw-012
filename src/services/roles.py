@@ -21,7 +21,7 @@ class RoleAccess:
         self,
         request: Request,
         current_user: dict = Depends(auth_service.get_current_user),
-    ) -> dict:
+    ):
         """
         Perform a role-based access check and return the current user if
         authorized.

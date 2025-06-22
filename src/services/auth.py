@@ -77,6 +77,8 @@ class Auth:
         Returns:
             str: The encoded JWT email token.
         """
+        logger.info(f"JWT_SECRET in create_email_token: {settings.JWT_SECRET}")
+
         to_encode = data.copy()
         expire = datetime.utcnow() + timedelta(hours=1)
         to_encode.update(
@@ -162,7 +164,7 @@ class Auth:
         Side Effects:
             Stores a reset token with a 1-hour expiration in the cache and sends a password reset email to the user.
         """
-
+        logger.info(f"rc in request_password_reset: {rc}")
         from src.repository.users import get_user_by_email
 
         user = await get_user_by_email(email, db)
@@ -196,7 +198,7 @@ class Auth:
         Side Effects:
             Updates the user's password in the database and deletes the reset token from the cache.
         """
-
+        logger.info(f"rc in reset_password: {rc}")
         from src.repository.users import get_user_by_email
 
         cached_email = await rc.get(f"reset_token:{token}")

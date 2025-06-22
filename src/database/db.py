@@ -11,6 +11,7 @@ import json
 logger = logging.getLogger(__name__)
 
 rc = StrictRedis(host="redis", port=6379, decode_responses=True)
+logger.info(f"rc in db.py: {rc}")
 
 engine = create_async_engine(settings.DATABASE_URL, echo=True)
 

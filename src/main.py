@@ -3,16 +3,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi_limiter import FastAPILimiter
 
 from src.database.db import init_db, rc
-from src.services.base import settings
 from src.routers import contacts, users, utils
+from prometheus_fastapi_instrumentator import Instrumentator
 
 import uvicorn
 
+
 app = FastAPI(title="Contacts API", description="Contacts management REST API")
+
+Instrumentator().instrument(app).expose(app)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.BASE_URL, "http://127.0.0.1:8000", "http://localhost:5500"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -35,3 +38,7 @@ app.include_router(users.router)
 
 if __name__ == "__main__":
     uvicorn.run("src.main:app", debug=True, reload=True)
+
+
+# poetry run pytest tests/unit/ --cov=src/services --cov=src/schemas--cov-report=html
+# poetry run pytest tests/integration/ --cov=src/services --cov=src/schemas --cov-report=html
