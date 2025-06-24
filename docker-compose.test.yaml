@@ -1,0 +1,47 @@
+version: "3.8"
+
+services:
+  redis:
+    image: redis:alpine
+    container_name: redis_test
+    ports:
+      - "6379:6379"
+    networks:
+      - test-net
+
+  test-db:
+    image: postgres:14-alpine
+    container_name: test-db
+    environment:
+      POSTGRES_DB: test_contacts_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    networks:
+      - test-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  contacts-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: contacts-test
+    depends_on:
+      test-db:
+        condition: service_healthy
+    environment:
+      DOTENV_PATH: /app/.env.test
+      PYTHONPATH: /app/src
+      TZ: Europe/Kyiv
+    networks:
+      - test-net
+    restart: "no"
+
+networks:
+  test-net:
+    driver: bridge

@@ -1,3 +1,4 @@
+# tests/conftest.py
 import pytest
 from unittest.mock import AsyncMock, patch
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -73,7 +74,7 @@ def mock_user():
 def test_app(mock_db_session):
     """FastAPI app with mocked dependencies."""
     from src.main import app
-    from src.database.db import get_db, init_db
+    from src.database.db import get_db
     from fastapi.security import OAuth2PasswordBearer
 
     with patch("src.main.init_db", AsyncMock()):

@@ -1,3 +1,4 @@
+# src/services/email.py
 from fastapi_mail import FastMail, ConnectionConfig, MessageSchema, MessageType
 from pathlib import Path
 from src.services.base import settings

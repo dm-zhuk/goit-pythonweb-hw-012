@@ -40,5 +40,22 @@ if __name__ == "__main__":
     uvicorn.run("src.main:app", debug=True, reload=True)
 
 
-# poetry run pytest tests/unit/ --cov=src/services --cov=src/schemas--cov-report=html
-# poetry run pytest tests/integration/ --cov=src/services --cov=src/schemas --cov-report=html
+# docker build -f Dockerfile.test -t integration-tests .
+# docker run --rm integration-tests
+
+"""
+docker-compose -f docker-compose.test.yaml build --no-cache
+docker-compose -f docker-compose.test.yaml up --abort-on-container-exit
+
+
+  poetry run pytest tests/integration -m integration --cov=src --cov-report=html
+
+Unit only (pure mocks):
+poetry run pytest tests/unit
+
+Integration only:
+poetry run pytest tests/integration -m integration
+-------------------
+docker stop test-db
+
+"""

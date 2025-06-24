@@ -1,0 +1,15 @@
+FROM python:3.13-slim
+
+WORKDIR /app
+COPY . /app
+COPY .env.test /app/.env.test
+
+RUN pip install poetry && \
+    poetry config virtualenvs.create false && \
+    poetry install --no-interaction --with dev
+
+ENV DOTENV_PATH=/app/.env.test
+ENV PYTHONPATH=/app/src
+ENV TZ=Europe/Kyiv
+
+CMD ["poetry", "run", "pytest", "tests/integration", "-m", "integration", "--cov=src", "--cov-fail-under=75"]
