@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+import os
 
 
 class Settings(BaseSettings):
@@ -20,9 +21,13 @@ class Settings(BaseSettings):
     POSTGRES_DB: str
     PGADMIN_DEFAULT_EMAIL: str
     PGADMIN_DEFAULT_PASSWORD: str
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
 
     model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", extra="ignore"
+        env_file=("/app/.env.test" if os.getenv("TEST_ENV") == "1" else ".env"),
+        env_file_encoding="utf-8",
+        extra="allow",
     )
 
 

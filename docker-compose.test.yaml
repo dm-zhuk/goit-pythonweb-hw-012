@@ -35,6 +35,7 @@ services:
       test-db:
         condition: service_healthy
     environment:
+      TEST_ENV: "1"
       DOTENV_PATH: /app/.env.test
       PYTHONPATH: /app/src
       TZ: Europe/Kyiv

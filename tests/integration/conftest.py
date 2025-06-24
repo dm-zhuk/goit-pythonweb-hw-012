@@ -5,32 +5,16 @@ import redis.asyncio as redis
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from src.main import app
 from src.database.db import get_db, Base
+from src.services.base import settings
 
 # ───────────────────────────────
-# Settings
+# DB Setup
 # ───────────────────────────────
 
-
-class Settings(BaseSettings):
-    DATABASE_URL: str
-    REDIS_HOST: str = "redis_test"
-    REDIS_PORT: int = 6379
-    model_config = SettingsConfigDict(env_file="/app/.env.test")
-
-
-st = Settings()
-
-# ───────────────────────────────
-# Database Setup
-# ───────────────────────────────
-
-TEST_DATABASE_URL = st.DATABASE_URL
-
-test_engine = create_async_engine(TEST_DATABASE_URL, echo=False)
+test_engine = create_async_engine(settings.DATABASE_URL, echo=False)
 TestSessionLocal = sessionmaker(
     bind=test_engine, class_=AsyncSession, expire_on_commit=False
 )
@@ -49,15 +33,14 @@ async def override_get_db():
 @pytest.fixture(scope="session")
 async def redis_client():
     rc = redis.StrictRedis(
-        host=st.REDIS_HOST, port=st.REDIS_PORT, decode_responses=True
+        host=settings.REDIS_HOST, port=settings.REDIS_PORT, decode_responses=True
     )
     try:
-        pong = await rc.ping()
-        assert pong is True
+        await rc.ping()
     except Exception as e:
-        raise RuntimeError("❌ Redis is not available: ", e)
-    yield rc
+        raise RuntimeError("Redis connection failed: ", e)
     await rc.flushdb()
+    yield rc
     await rc.close()
 
 
