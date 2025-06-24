@@ -1,13 +1,13 @@
 import pytest
+import pytest_asyncio
 from unittest.mock import patch, MagicMock
 from fastapi import UploadFile
 from io import BytesIO
 from src.services.cloudinary_config import UploadFileService
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 def fake_upload_file():
-    # Create a fake UploadFile instance with BytesIO as file-like object
     file_content = b"fake image bytes"
     file = UploadFile(filename="test.png", file=BytesIO(file_content))
     return file

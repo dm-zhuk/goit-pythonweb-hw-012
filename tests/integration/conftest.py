@@ -1,5 +1,6 @@
+import warnings
 import asyncio
-import pytest
+import pytest_asyncio
 import redis.asyncio as redis
 
 from httpx import AsyncClient
@@ -10,8 +11,10 @@ from src.main import app
 from src.database.db import get_db, Base
 from src.services.base import settings
 
+warnings.simplefilter("always", RuntimeWarning)
+
 # ───────────────────────────────
-# DB Setup
+# Database Setup
 # ───────────────────────────────
 
 test_engine = create_async_engine(settings.DATABASE_URL, echo=False)
@@ -30,33 +33,44 @@ async def override_get_db():
 # ───────────────────────────────
 
 
-@pytest.fixture(scope="session")
+@pytest_asyncio.fixture(scope="session")
 async def redis_client():
     rc = redis.StrictRedis(
-        host=settings.REDIS_HOST, port=settings.REDIS_PORT, decode_responses=True
+        host="redis_test",
+        port=6379,
+        decode_responses=True,
     )
     try:
-        await rc.ping()
+        pong = await rc.ping()
+        assert pong is True
     except Exception as e:
-        raise RuntimeError("Redis connection failed: ", e)
-    await rc.flushdb()
+        raise RuntimeError(f"Redis not available at startup: {e}")
     yield rc
-    await rc.close()
+    try:
+        await rc.flushdb()
+        await rc.close()
+    except Exception as e:
+        print(f"⚠️ Redis teardown warning: {e}")
 
 
 # ───────────────────────────────
-# Pytest Fixtures
+# Event Loop
 # ───────────────────────────────
 
 
-@pytest.fixture(scope="session")
+@pytest_asyncio.fixture(scope="session")
 def event_loop():
     loop = asyncio.get_event_loop()
     yield loop
     loop.close()
 
 
-@pytest.fixture(scope="session", autouse=True)
+# ───────────────────────────────
+# Test DB Lifecycle
+# ───────────────────────────────
+
+
+@pytest_asyncio.fixture(scope="session", autouse=True)
 async def setup_test_db():
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -65,13 +79,18 @@ async def setup_test_db():
         await conn.run_sync(Base.metadata.drop_all)
 
 
-@pytest.fixture(scope="function")
+# ───────────────────────────────
+# Per-Test Fixtures
+# ───────────────────────────────
+
+
+@pytest_asyncio.fixture(scope="function")
 async def db_session():
     async with TestSessionLocal() as session:
         yield session
 
 
-@pytest.fixture(scope="function")
+@pytest_asyncio.fixture(scope="function")
 async def client():
     app.dependency_overrides[get_db] = override_get_db
     async with AsyncClient(app=app, base_url="http://test") as c:

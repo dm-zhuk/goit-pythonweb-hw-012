@@ -1,4 +1,5 @@
 import pytest
+import pytest_asyncio
 from datetime import datetime, timedelta
 from jose import jwt, JWTError
 from fastapi import HTTPException

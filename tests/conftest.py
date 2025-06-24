@@ -1,5 +1,4 @@
-# tests/conftest.py
-import pytest
+import pytest_asyncio
 from unittest.mock import AsyncMock, patch
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from src.services.auth import auth_service
@@ -31,12 +30,12 @@ class TestSettings(BaseSettings):
     model_config = SettingsConfigDict(env_file=None, extra="ignore")
 
 
-@pytest.fixture(scope="session")
+@pytest_asyncio.fixture(scope="session")
 def test_settings() -> TestSettings:
     return TestSettings()
 
 
-@pytest.fixture(scope="function")
+@pytest_asyncio.fixture(scope="function")
 def mock_db_session():
     """Mock AsyncSession for unit tests."""
     mock_session = AsyncMock()
@@ -45,7 +44,7 @@ def mock_db_session():
     return mock_session
 
 
-@pytest.fixture(scope="function")
+@pytest_asyncio.fixture(scope="function")
 def mock_user():
     """Mock User object for unit tests."""
     user = type(
@@ -70,7 +69,7 @@ def mock_user():
     return user
 
 
-@pytest.fixture(scope="function")
+@pytest_asyncio.fixture(scope="function")
 def test_app(mock_db_session):
     """FastAPI app with mocked dependencies."""
     from src.main import app

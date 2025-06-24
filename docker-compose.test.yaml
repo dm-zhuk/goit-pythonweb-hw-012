@@ -30,6 +30,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.test
+    command: sh -c "pytest tests && tail -f /dev/null"
     container_name: contacts-test
     depends_on:
       test-db:

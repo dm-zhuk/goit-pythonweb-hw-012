@@ -1,5 +1,3 @@
-# tests/integration/test_password_reset.py
-
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.services.auth import auth_service
