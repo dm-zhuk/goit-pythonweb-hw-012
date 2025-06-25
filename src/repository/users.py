@@ -1,4 +1,3 @@
-# src/repository/users.py
 import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession

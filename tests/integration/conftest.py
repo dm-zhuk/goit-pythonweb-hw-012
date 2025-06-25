@@ -1,4 +1,3 @@
-# tests/integration/conftest.py
 import warnings
 import asyncio
 import pytest_asyncio
@@ -14,10 +13,8 @@ from src.services.base import settings
 
 warnings.simplefilter("always", RuntimeWarning)
 
-# ───────────────────────────────
-# Database Setup
-# ───────────────────────────────
 
+# Database Setup
 test_engine = create_async_engine(settings.DATABASE_URL, echo=False)
 TestSessionLocal = sessionmaker(
     bind=test_engine, class_=AsyncSession, expire_on_commit=False
@@ -29,11 +26,7 @@ async def override_get_db():
         yield session
 
 
-# ───────────────────────────────
 # Redis Setup
-# ───────────────────────────────
-
-
 @pytest_asyncio.fixture(scope="session")
 async def redis_client():
     rc = redis.Redis(
@@ -56,11 +49,7 @@ async def redis_client():
         print(f"⚠️ Redis teardown warning: {e}")
 
 
-# ───────────────────────────────
 # Event Loop
-# ───────────────────────────────
-
-
 @pytest_asyncio.fixture(scope="session")
 def event_loop():
     loop = asyncio.new_event_loop()
@@ -68,11 +57,7 @@ def event_loop():
     loop.close()
 
 
-# ───────────────────────────────
 # Test DB Lifecycle
-# ───────────────────────────────
-
-
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def setup_test_db():
     async with test_engine.begin() as conn:
@@ -82,11 +67,7 @@ async def setup_test_db():
         await conn.run_sync(Base.metadata.drop_all)
 
 
-# ───────────────────────────────
 # Per-Test Fixtures
-# ───────────────────────────────
-
-
 @pytest_asyncio.fixture(scope="function")
 async def db_session():
     async with TestSessionLocal() as session:
@@ -95,7 +76,6 @@ async def db_session():
 
 @pytest_asyncio.fixture(scope="function")
 async def test_app():
-    # Override get_db dependency
     app.dependency_overrides[get_db] = override_get_db
     yield app
     app.dependency_overrides.clear()

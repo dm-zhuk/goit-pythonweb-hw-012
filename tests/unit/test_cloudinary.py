@@ -1,6 +1,6 @@
 import pytest
 import pytest_asyncio
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from fastapi import UploadFile
 from io import BytesIO
 from src.services.cloudinary_config import UploadFileService
@@ -22,11 +22,9 @@ def test_upload_file_success(mock_build_url, mock_upload, fake_upload_file):
     service = UploadFileService("cloud_name", "api_key", "api_secret")
     result = service.upload_file(fake_upload_file, "testuser")
 
-    # Check cloudinary uploader called with correct parameters
     mock_upload.assert_called_once_with(
         fake_upload_file.file, public_id="RestApp/testuser", overwrite=True
     )
-    # Check build_url called with correct resizing params
     mock_build_url.assert_called_once_with(
         width=250, height=250, crop="fill", version=123456
     )

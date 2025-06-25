@@ -1,7 +1,6 @@
 import pytest
+
 from fastapi import HTTPException, status
-from fastapi.requests import Request
-from unittest.mock import AsyncMock
 
 from src.services.roles import RoleAccess
 from src.database.models import Role
@@ -28,7 +27,6 @@ class DummyRequest:
 async def test_role_access(user_role, allowed_roles, should_pass):
     role_access = RoleAccess(allowed_roles)
 
-    # Mock current_user dict
     current_user = {"roles": user_role}
     request = DummyRequest()
 

@@ -1,4 +1,3 @@
-# src/database/metadata.py
 from sqlalchemy import MetaData
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 

@@ -6,7 +6,7 @@ from src.database.models import Role
 
 
 class TestSettings(BaseSettings):
-    DATABASE_URL: str = "postgresql+asyncpg://testuser:testpass@localhost:5433/testdb"
+    DATABASE_URL: str = "postgresql+asyncpg://testuser:testpass@localhost:5432/testdb"
     JWT_SECRET: str = "test-secret"
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRE_MINUTES: int = 60

@@ -1,35 +1,26 @@
-# Dockerfile.test
-
 FROM python:3.13-slim
 
 WORKDIR /app
 
-# Install system dependencies
 RUN apt-get update && \
     apt-get install -y gcc libpq-dev curl && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy and install Python dependencies
 COPY pyproject.toml poetry.lock ./
 RUN pip install --no-cache-dir poetry && \
     poetry config virtualenvs.create false && \
     poetry install --no-interaction --with dev
 
-# Copy application code
 COPY . /app
 
-# Copy environment variables configuration
 COPY .env.test /app/.env.test
 
-# Copy and set permissions for the test script
 COPY scripts/run_tests.sh /app/scripts/run_tests.sh
 RUN chmod +x /app/scripts/run_tests.sh
 
-# Set environment variables
 ENV DOTENV_PATH=/app/.env.test
 ENV PYTHONPATH=/app/src
 ENV TZ=Europe/Kyiv
 
-# Default command to run tests
 CMD ["pytest", "--cov=src", "--cov-report=term-missing", "tests/integration"]

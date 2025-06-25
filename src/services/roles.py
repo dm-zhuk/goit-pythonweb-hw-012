@@ -1,4 +1,3 @@
-# src/services/roles.py
 from fastapi import Depends, HTTPException, status, Request
 from src.services.auth import auth_service
 from src.database.models import Role

@@ -1,4 +1,3 @@
-# src/routers/users.py
 import logging
 from fastapi import (
     APIRouter,

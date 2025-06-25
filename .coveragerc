@@ -1,0 +1,21 @@
+# .coveragerc
+[run]
+source = src
+branch = True
+
+[paths]
+source =
+    src
+    /app/src
+    /Users/macbook/Documents/GitHub/15_Fullstack_WebDevPython/goit-pythonweb-hw-012/src
+
+[report]
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:
+    if typing.TYPE_CHECKING:
+    raise NotImplementedError
+    assert False
+
+precision = 2
+show_missing = True

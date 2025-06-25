@@ -1,4 +1,3 @@
-# src/schemas/schemas.py
 """Data Validation with Pydantic - ensures data sent to API is valid"""
 
 from pydantic import BaseModel, EmailStr, ConfigDict

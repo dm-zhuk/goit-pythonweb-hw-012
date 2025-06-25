@@ -13,7 +13,6 @@ from tests.conftest import TestSettings
 from src.database.models import Role
 
 
-# Reload auth_service to apply settings patch
 def reload_auth_service():
     importlib.reload(importlib.import_module("src.services.auth"))
     from src.services.auth import auth_service
@@ -21,7 +20,6 @@ def reload_auth_service():
     return auth_service
 
 
-# Email Service Tests
 @pytest.mark.unit
 async def test_send_verification_email_success():
     """Test sending verification email successfully."""
@@ -64,12 +62,11 @@ async def test_send_reset_email_failure():
             await send_reset_email("test@example.com", "token123", "http://test")
 
 
-# Settings Tests
 @pytest.mark.unit
 def test_settings_initialization_valid():
     """Test Settings initialization with valid env vars."""
     settings = Settings(
-        DATABASE_URL="postgresql+asyncpg://testuser:testpass@localhost:5433/testdb",
+        DATABASE_URL="postgresql+asyncpg://testuser:testpass@localhost:5432/testdb",
         JWT_SECRET="test-secret",
         JWT_ALGORITHM="HS256",
         JWT_EXPIRE_MINUTES=60,
@@ -81,7 +78,6 @@ def test_settings_initialization_valid():
     assert settings.CLOUDINARY_CLOUD_NAME == "testcloud"
 
 
-# Auth Service Tests
 @pytest.mark.unit
 def test_verify_password():
     """Test password verification."""
@@ -298,7 +294,6 @@ async def test_get_current_admin_success(mock_user):
     assert result["roles"] == Role.admin.value
 
 
-# Cloudinary Tests
 @pytest.mark.unit
 def test_upload_file_service_init():
     """Test UploadFileService initialization."""
@@ -368,7 +363,6 @@ def test_get_upload_file_service(test_app):
     assert service.cloud_name == TestSettings().CLOUDINARY_CLOUD_NAME
 
 
-# Role Tests
 @pytest.mark.unit
 async def test_role_access_allowed(mock_user):
     """Test RoleAccess with allowed role."""
