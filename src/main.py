@@ -38,13 +38,10 @@ app.include_router(users.router)
 
 
 """
-docker-compose -f docker-compose.test.yaml up --build
+docker-compose -f docker-compose.test.yaml up --build -d
 
 Unit only (pure mocks):
 poetry run pytest tests/unit
-
-Integration only:
-poetry run pytest tests/integration -m integration --cov=src --cov-report=html
 -------------------
 docker stop test-db
 
