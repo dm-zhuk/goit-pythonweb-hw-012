@@ -36,26 +36,18 @@ app.include_router(utils.router, prefix="/api")
 app.include_router(contacts.router, prefix="/api/contacts")
 app.include_router(users.router)
 
-if __name__ == "__main__":
-    uvicorn.run("src.main:app", debug=True, reload=True)
-
-
-# docker build -f Dockerfile.test -t integration-tests .
-# docker run --rm integration-tests
 
 """
-docker-compose -f docker-compose.test.yaml build --no-cache
-docker-compose -f docker-compose.test.yaml up --abort-on-container-exit
-
-
-  poetry run pytest tests/integration -m integration --cov=src --cov-report=html
+docker-compose -f docker-compose.test.yaml up --build
 
 Unit only (pure mocks):
 poetry run pytest tests/unit
 
 Integration only:
-poetry run pytest tests/integration -m integration
+poetry run pytest tests/integration -m integration --cov=src --cov-report=html
 -------------------
 docker stop test-db
 
 """
+if __name__ == "__main__":
+    uvicorn.run("src.main:app", debug=True, reload=True)

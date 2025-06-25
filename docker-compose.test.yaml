@@ -1,13 +1,16 @@
-version: "3.8"
-
 services:
-  redis:
+  redis-test:
     image: redis:alpine
-    container_name: redis_test
+    container_name: redis-test
     ports:
       - "6379:6379"
     networks:
       - test-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   test-db:
     image: postgres:14-alpine
@@ -17,7 +20,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5433:5432"
+      - "5432:5432"
     networks:
       - test-net
     healthcheck:
@@ -30,10 +33,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.test
-    command: sh -c "pytest tests && tail -f /dev/null"
+    volumes:
+      - .:/app
     container_name: contacts-test
     depends_on:
       test-db:
+        condition: service_healthy
+      redis-test:
         condition: service_healthy
     environment:
       TEST_ENV: "1"
@@ -43,6 +49,8 @@ services:
     networks:
       - test-net
     restart: "no"
+    command: >
+      sh -c "pytest --cov=src --tb=short; tail -f /dev/null"
 
 networks:
   test-net:

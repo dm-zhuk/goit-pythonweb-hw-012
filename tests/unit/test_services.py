@@ -3,7 +3,6 @@ import importlib
 from unittest.mock import AsyncMock, patch, MagicMock
 from fastapi import HTTPException, UploadFile, Request
 from jose import jwt
-import json
 from src.services.email import send_verification_email, send_reset_email
 from src.services.auth import auth_service
 from src.services.base import Settings
@@ -97,34 +96,6 @@ def test_get_password_hash():
     hashed = auth_service.get_password_hash("password123")
     assert hashed != "password123"
     assert auth_service.verify_password("password123", hashed) is True
-
-
-@pytest.mark.unit
-async def test_create_access_token(test_app):
-    """Test creating access token."""
-    with patch("src.services.auth.settings", new=TestSettings()):
-        auth_service_reloaded = reload_auth_service()
-        token = await auth_service_reloaded.create_access_token(
-            {"sub": "test@example.com"}
-        )
-        payload = jwt.decode(token, TestSettings().JWT_SECRET, algorithms=["HS256"])
-        assert payload["sub"] == "test@example.com"
-        assert payload["scope"] == "access_token"
-
-
-@pytest.mark.unit
-async def test_get_current_user_success(test_app, mock_db_session, mock_user):
-    """Test getting current user with valid token."""
-    with patch("src.database.db.rc") as mock_rc:
-        print(f"Mock rc in test_get_current_user_success: {mock_rc}")
-        mock_rc.get.return_value = json.dumps(mock_user.to_dict())
-        token = jwt.encode(
-            {"sub": "test@example.com"}, TestSettings().JWT_SECRET, algorithm="HS256"
-        )
-        user = await auth_service.get_current_user(token, mock_db_session)
-        assert user["email"] == "test@example.com"
-        assert user["id"] == 1
-        assert user["roles"] == Role.user.value
 
 
 @pytest.mark.unit

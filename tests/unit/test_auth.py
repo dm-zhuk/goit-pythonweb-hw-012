@@ -1,12 +1,9 @@
 import pytest
 from jose import jwt
 from fastapi import HTTPException
-from datetime import timedelta
-from unittest.mock import AsyncMock, patch
 
 from src.services.auth import auth_service
 from src.services.base import settings
-from src.database.models import Role
 
 
 def test_verify_password_and_hash():

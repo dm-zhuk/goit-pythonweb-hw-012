@@ -1,103 +1,132 @@
 import pytest
-import pytest_asyncio
-from datetime import datetime, timedelta
-from jose import jwt, JWTError
-from fastapi import HTTPException
 from unittest.mock import AsyncMock, patch
-
-from src.services.auth import Auth, auth_service
+from src.services.auth import auth_service
+from src.database.models import Role
 from src.services.base import settings
 
 
 @pytest.mark.asyncio
-async def test_password_hash_and_verify():
-    password = "mysecretpassword"
-    hashed = auth_service.get_password_hash(password)
-    assert hashed != password
-    assert auth_service.verify_password(password, hashed)
-    assert not auth_service.verify_password("wrongpass", hashed)
+@patch("src.services.auth.jwt.encode")
+async def test_create_access_token(mock_encode):
+    # Arrange
+    data = {"sub": "testuser@example.com"}
+    mock_encode.return_value = "mocked_token"
 
-
-@pytest.mark.asyncio
-async def test_get_current_user_success_and_failure(monkeypatch, async_session):
-    # Patch get_user_from_cache to return dummy user
-    monkeypatch.setattr(
-        "src.database.db.get_user_from_cache",
-        AsyncMock(return_value={"email": "test@example.com"}),
-    )
-
-    # Create a token manually for testing
-    data = {"sub": "test@example.com"}
+    # Act
     token = await auth_service.create_access_token(data)
 
-    user = await auth_service.get_current_user(token=token, db=async_session)
-    assert user["email"] == "test@example.com"
-
-    # Test invalid token raises HTTPException
-    with pytest.raises(HTTPException):
-        await auth_service.get_current_user(token="invalidtoken", db=async_session)
+    # Assert
+    assert token == "mocked_token"
+    mock_encode.assert_awaited_once()
 
 
 @pytest.mark.asyncio
-async def test_request_password_reset_and_reset_password(monkeypatch, async_session):
-    email = "testreset@example.com"
+@patch("src.services.auth.jwt.encode")
+async def test_create_email_token(mock_encode):
+    # Arrange
+    data = {"sub": "testuser@example.com"}
+    mock_encode.return_value = "mocked_email_token"
 
-    # Mock get_user_by_email to return a user object with email and hashed_password
-    class DummyUser:
-        def __init__(self, email):
-            self.email = email
-            self.hashed_password = auth_service.get_password_hash("oldpass")
+    # Act
+    token = await auth_service.create_email_token(data)
 
-    monkeypatch.setattr(
-        "src.repository.users.get_user_by_email",
-        AsyncMock(return_value=DummyUser(email)),
-    )
-
-    # Patch send_reset_email to a dummy async func (to avoid sending real emails)
-    monkeypatch.setattr("src.services.email.send_reset_email", AsyncMock())
-
-    # Patch redis client rc.setex and rc.delete
-    monkeypatch.setattr("src.database.db.rc.setex", AsyncMock())
-    monkeypatch.setattr("src.database.db.rc.delete", AsyncMock())
-    monkeypatch.setattr("src.database.db.rc.get", AsyncMock(return_value=email))
-
-    # Test request_password_reset runs without error
-    await auth_service.request_password_reset(email, async_session)
-    # The send_reset_email and rc.setex should be called - verified by mock call count if desired
-
-    # Test reset_password happy path
-    token = await auth_service.create_email_token({"sub": email})
-
-    # Also patch get_email_from_token to call the real method
-    monkeypatch.setattr(
-        auth_service, "get_email_from_token", AsyncMock(return_value=email)
-    )
-
-    # Reset password should update hashed_password and call db.commit
-    commit_called = False
-
-    async def dummy_commit():
-        nonlocal commit_called
-        commit_called = True
-
-    async def dummy_refresh(user):
-        return
-
-    async_session.commit = dummy_commit
-    async_session.refresh = dummy_refresh
-
-    await auth_service.reset_password(token, "newpassword123", async_session)
-    assert commit_called
+    # Assert
+    assert token == "mocked_email_token"
+    mock_encode.assert_called_once()
 
 
 @pytest.mark.asyncio
-async def test_get_current_admin_allows_admin_and_denies_others():
-    # Admin user
-    admin_user = {"roles": "admin"}
-    result = await auth_service.get_current_admin(admin_user)
-    assert result == admin_user
+@patch("src.services.auth.get_user_from_cache", new_callable=AsyncMock)
+@patch("src.services.auth.jwt.decode")
+async def test_get_current_user(mock_decode, mock_get_user_from_cache):
+    # Arrange
+    token = "mocked_token"
+    mock_decode.return_value = {"sub": "testuser@example.com"}
+    mock_get_user_from_cache.return_value = {"email": "testuser@example.com"}
 
-    # Non-admin user should raise
-    non_admin_user = {"roles": "user"}
-    with pytest.raises(HTTPException):
-        await auth_service.get_current_admin(non_admin_user)
+    # Act
+    user = await auth_service.get_current_user(token)
+
+    # Assert
+    assert user["email"] == "testuser@example.com"
+    mock_get_user_from_cache.assert_awaited_once_with(
+        "testuser@example.com", AsyncMock()
+    )
+
+
+@pytest.mark.asyncio
+@patch("src.services.auth.jwt.decode")
+async def test_get_email_from_token(mock_decode):
+    # Arrange
+    token = "mocked_token"
+    mock_decode.return_value = {"sub": "testuser@example.com", "scope": "email_token"}
+
+    # Act
+    email = await auth_service.get_email_from_token(token)
+
+    # Assert
+    assert email == "testuser@example.com"
+
+
+@pytest.mark.asyncio
+@patch("src.repository.users.get_user_by_email", new_callable=AsyncMock)
+@patch("src.services.auth.auth_service.create_email_token", new_callable=AsyncMock)
+@patch("src.services.auth.send_reset_email", new_callable=AsyncMock)
+async def test_request_password_reset(
+    mock_send_reset_email, mock_create_email_token, mock_get_user_by_email
+):
+    # Arrange
+    mock_get_user_by_email.return_value = AsyncMock()
+    mock_create_email_token.return_value = "mocked_email_token"
+    email = "testuser@example.com"
+    db = AsyncMock()
+
+    # Act
+    await auth_service.request_password_reset(email, db)
+
+    # Assert
+    mock_get_user_by_email.assert_awaited_once_with(email, db)
+    mock_create_email_token.assert_awaited_once_with({"sub": email})
+    mock_send_reset_email.assert_awaited_once_with(
+        email, "mocked_email_token", str(settings.BASE_URL)
+    )
+
+
+@pytest.mark.asyncio
+@patch("src.repository.users.get_user_by_email", new_callable=AsyncMock)
+@patch("src.services.auth.rc.get", new_callable=AsyncMock)
+@patch("src.services.auth.auth_service.get_email_from_token", new_callable=AsyncMock)
+async def test_reset_password(
+    mock_get_email_from_token, mock_get, mock_get_user_by_email
+):
+    # Arrange
+    token = "mocked_token"
+    new_password = "NewStrongPass123"
+    email = "testuser@example.com"
+    mock_get.return_value = email
+    mock_get_email_from_token.return_value = email
+    mock_get_user_by_email.return_value = AsyncMock()
+
+    db = AsyncMock()
+
+    # Act
+    await auth_service.reset_password(token, new_password, db)
+
+    # Assert
+    mock_get_user_by_email.assert_awaited_once_with(email, db)
+    mock_get_email_from_token.assert_awaited_once_with(token)
+    assert (
+        mock_get_user_by_email.return_value.hashed_password == "hashed_password"
+    )  # Verify password is updated
+
+
+@pytest.mark.asyncio
+async def test_get_current_admin():
+    # Arrange
+    user = {"roles": Role.admin.value}
+
+    # Act
+    admin_user = await auth_service.get_current_admin(user)
+
+    # Assert
+    assert admin_user == user

@@ -1,3 +1,4 @@
+# tests/integration/conftest.py
 import warnings
 import asyncio
 import pytest_asyncio
@@ -8,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 from src.main import app
-from src.database.db import get_db, Base
+from src.database.db import Base, get_db
 from src.services.base import settings
 
 warnings.simplefilter("always", RuntimeWarning)
@@ -35,8 +36,8 @@ async def override_get_db():
 
 @pytest_asyncio.fixture(scope="session")
 async def redis_client():
-    rc = redis.StrictRedis(
-        host="redis_test",
+    rc = redis.Redis(
+        host="redis-test",
         port=6379,
         decode_responses=True,
     )
@@ -45,7 +46,9 @@ async def redis_client():
         assert pong is True
     except Exception as e:
         raise RuntimeError(f"Redis not available at startup: {e}")
+
     yield rc
+
     try:
         await rc.flushdb()
         await rc.close()
@@ -60,7 +63,7 @@ async def redis_client():
 
 @pytest_asyncio.fixture(scope="session")
 def event_loop():
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
     yield loop
     loop.close()
 
@@ -91,7 +94,14 @@ async def db_session():
 
 
 @pytest_asyncio.fixture(scope="function")
-async def client():
+async def test_app():
+    # Override get_db dependency
     app.dependency_overrides[get_db] = override_get_db
-    async with AsyncClient(app=app, base_url="http://test") as c:
-        yield c
+    yield app
+    app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture(scope="function")
+async def client(test_app):
+    async with AsyncClient(app=test_app, base_url="http://test") as ac:
+        yield ac
